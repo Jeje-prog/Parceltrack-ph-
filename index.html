@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>ParcelTrack PH — Track Your Parcels</title>
+  <meta name="description" content="Manage your Shopee, TikTok Shop, and courier parcels in one place with ParcelTrack PH.">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #738096;
+      --primary: #2563eb;
+      --border: #e4e9f1;
+      --green: #15803d;
+      --red: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input, select { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .hidden { display: none !important; }
+
+    header {
+      background: #101827;
+      color: white;
+      padding: 19px 20px;
+    }
+
+    .header-inner {
+      max-width: 1050px;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand {
+      font-size: 21px;
+      font-weight: 850;
+      letter-spacing: -.6px;
+    }
+
+    .brand span { color: #60a5fa; }
+
+    .tagline {
+      margin-top: 3px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .container {
+      width: min(100% - 28px, 1050px);
+      margin: 25px auto 50px;
+    }
+
+    .hero {
+      background: linear-gradient(130deg, #1d4ed8, #2563eb, #4f46e5);
+      color: white;
+      border-radius: 20px;
+      padding: 26px 22px;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      font-size: clamp(25px, 5vw, 36px);
+      margin: 0 0 8px;
+      line-height: 1.15;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #e0eaff;
+      line-height: 1.6;
+      max-width: 600px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 5px 20px rgba(25, 40, 70, .035);
+      min-width: 0;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 17px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 13px 0 6px;
+    }
+
+    input, select {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: white;
+      color: var(--ink);
+      border: 1px solid #d7deea;
+      border-radius: 9px;
+      outline: none;
+      min-height: 45px;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px #2563eb1c;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 9px;
+      padding: 12px 15px;
+      font-weight: 750;
+      min-height: 44px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
+
+    .btn-secondary {
+      background: #eaf0ff;
+      color: #1d4ed8;
+    }
+
+    .btn-danger {
+      background: #fff0f0;
+      color: var(--red);
+      padding: 8px 10px;
+      min-height: 36px;
+      font-size: 12px;
+    }
+
+    .full { width: 100%; margin-top: 16px; }
+
+    .muted { color: var(--muted); }
+
+    .small { font-size: 12px; line-height: 1.6; }
+
+    .switch {
+      margin-top: 15px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .link {
+      color: var(--primary);
+      background: none;
+      border: 0;
+      padding: 0;
+      font-weight: 750;
+    }
+
+    .notice {
+      border-radius: 10px;
+      padding: 12px;
+      margin: 0 0 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .notice.info { background: #eaf2ff; color: #1e40af; }
+    .notice.success { background: #e9f9ee; color: #166534; }
+    .notice.error { background: #fff0f0; color: #991b1b; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 15px 12px;
+    }
+
+    .stat-number {
+      font-size: 25px;
+      font-weight: 850;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .list-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 13px;
+    }
+
+    .list-top h2 { margin: 0; }
+
+    .parcel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 11px;
+      min-width: 0;
+    }
+
+    .parcel-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .parcel-name {
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .tracking {
+      font-size: 12px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+      margin-top: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 8px;
+      border-radius: 20px;
+      background: #edf2ff;
+      color: #1d4ed8;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: normal;
+      text-align: center;
+    }
+
+    .parcel-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 28px 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .email-display {
+      font-size: 12px;
+      color: #cbd5e1;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px 15px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      .container { margin-top: 16px; }
+      .card { padding: 17px; }
+      .hero { padding: 23px 18px; }
+      .brand { font-size: 19px; }
+      .email-display { display: none; }
+      .stats { gap: 7px; }
+      .stat { padding: 12px 9px; }
+      .stat-number { font-size: 22px; }
+      .stat-label { font-size: 11px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-inner">
+      <div>
+        <div class="brand">ParcelTrack <span>PH</span></div>
+        <div class="tagline">Your parcels. One dashboard.</div>
+      </div>
+
+      <div class="top-actions">
+        <span id="userEmail" class="email-display"></span>
+        <button id="logoutBtn" class="btn btn-secondary hidden" type="button">
+          Sign out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Every parcel, in one place. 📦</h1>
+      <p>Organize your Shopee, TikTok Shop, and courier deliveries from one simple dashboard.</p>
+    </section>
+
+    <div id="globalNotice" class="notice hidden" role="status"></div>
+
+    <section id="setupScreen" class="card hidden">
+      <h2>Connect ParcelTrack PH</h2>
+      <p class="muted">The website still needs your Supabase project settings before accounts can work.</p>
+      <p class="small">Open the code in GitHub and replace the two configuration placeholders near the bottom with your Supabase Project URL and publishable key.</p>
+    </section>
+
+    <section id="authScreen" class="card hidden" style="max-width:470px;margin:auto">
+      <h2 id="authTitle">Welcome to ParcelTrack PH</h2>
+      <p id="authSubtitle" class="muted small">Sign in to manage your parcels.</p>
+
+      <div id="authNotice" class="notice hidden" role="status"></div>
+
+      <form id="authForm">
+        <label for="email">Email address</label>
+        <input id="email" type="email" autocomplete="email" required placeholder="you@example.com">
+
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters">
+
+        <button id="authSubmit" class="btn btn-primary full" type="submit">Sign in</button>
+      </form>
+
+      <div class="switch">
+        <span id="switchText">New to ParcelTrack PH?</span>
+        <button id="switchAuth" class="link" type="button">Create account</button>
+      </div>
+
+      <p class="muted small" style="margin-top:18px">
+        Your parcels are associated with your account. Never share your password with anyone.
+      </p>
+    </section>
+
+    <section id="appScreen" class="hidden">
+      <div class="stats">
+        <div class="stat">
+          <div id="totalCount" class="stat-number">0</div>
+          <div class="stat-label">Total parcels</div>
+        </div>
+        <div class="stat">
+          <div id="movingCount" class="stat-number">0</div>
+          <div class="stat-label">In transit</div>
+        </div>
+        <div class="stat">
+          <div id="deliveredCount" class="stat-number">0</div>
+          <div class="stat-label">Delivered</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <h2>＋ Add a parcel</h2>
+          <div id="parcelNotice" class="notice hidden" role="status"></div>
+
+          <form id="parcelForm">
+            <label for="itemName">Parcel name</label>
+            <input id="itemName" maxlength="120" placeholder="e.g. Wireless headphones">
+
+            <label for="trackingNumber">Tracking number *</label>
+            <input id="trackingNumber" maxlength="200" required placeholder="Enter tracking number">
+
+            <label for="courier">Courier *</label>
+            <select id="courier" required>
+              <option value="">Select courier</option>
+              <option>SPX Express</option>
+              <option>J&amp;T Express</option>
+              <option>Ninja Van</option>
+              <option>LBC</option>
+              <option>Flash Express</option>
+              <option>JRS Express</option>
+              <option>Other / Unknown</option>
+            </select>
+
+            <label for="platform">Shopping platform</label>
+            <select id="platform">
+              <option value="">Other / Not specified</option>
+              <option>Shopee</option>
+              <option>TikTok Shop</option>
+              <option>Lazada</option>
+              <option>Other</option>
+            </select>
+
+            <button id="addParcelBtn" class="btn btn-primary full" type="submit">
+              Save parcel
+            </button>
+          </form>
+
+          <p class="muted small" style="margin-top:14px">
+            This version saves parcel details. Live courier updates and automatic shopping-order imports are not connected yet.
+          </p>
+        </section>
+
+        <section class="card">
+          <div class="list-top">
+            <h2>My parcels</h2>
+            <button id="refreshBtn" class="btn btn-secondary" type="button">Refresh</button>
+          </div>
+
+          <label for="searchInput" style="margin-top:0">Search parcels</label>
+          <input id="searchInput" type="search" placeholder="Search name, tracking number, or courier">
+
+          <div id="parcelList" aria-live="polite">
+            <div class="empty">Loading your parcels…</div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    ParcelTrack PH · Track smarter, stay updated.<br>
+    Tracking data is not retrieved automatically in this version.
+  </footer>
+
+  <script>
+    /*
+      SETUP:
+      1. Replace YOUR_SUPABASE_PROJECT_URL with your project URL.
+      2. Replace YOUR_SUPABASE_PUBLISHABLE_KEY with your publishable key.
+      Never use a secret or service_role key in browser code.
+    */
+
+    const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+    const SUPABASE_PUBLISHABLE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+
+    let supabaseClient = null;
+    let currentUser = null;
+    let parcels = [];
+    let isRegistering = false;
+    let busy = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    function showNotice(id, message, type = "info") {
+      const el = $(id);
+      el.textContent = message;
+      el.className = "notice " + type;
+      el.classList.remove("hidden");
+    }
+
+    function hideNotice(id) {
+      $(id).classList.add("hidden");
+    }
+
+    function showScreen(name) {
+      ["setupScreen", "authScreen", "appScreen"].forEach(id => {
+        $(id).classList.toggle("hidden", id !== name);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[char]);
+    }
+
+    function prettyStatus(status) {
+      const labels = {
+        pending: "Pending",
+        in_transit: "In transit",
+        out_for_delivery: "Out for delivery",
+        delivered: "Delivered",
+        exception: "Delivery exception",
+        unknown: "Awaiting tracking"
+      };
+      return labels[status] || status || "Awaiting tracking";
+    }
+
+    function setBusy(value) {
+      busy = value;
+      $("authSubmit").disabled = value;
+      $("addParcelBtn").disabled = value;
+      $("refreshBtn").disabled = value;
+    }
+
+    function updateAuthLabels() {
+      $("authTitle").textContent = isRegistering
+        ? "Create your account"
+        : "Welcome to ParcelTrack PH";
+
+      $("authSubtitle").textContent = isRegistering
+        ? "Create an account to save your parcels."
+        : "Sign in to manage your parcels.";
+
+      $("authSubmit").textContent = isRegistering
+        ? "Create account"
+        : "Sign in";
+
+      $("switchText").textContent = isRegistering
+        ? "Already have an account?"
+        : "New to ParcelTrack PH?";
+
+      $("switchAuth").textContent = isRegistering
+        ? "Sign in"
+        : "Create account";
+
+      $("password").autocomplete = isRegistering
+        ? "new-password"
+        : "current-password";
+    }
+
+    function updateStats() {
+      $("totalCount").textContent = parcels.length;
+      $("movingCount").textContent = parcels.filter(p =>
+        ["in_transit", "out_for_delivery"].includes(p.status)
+      ).length;
+      $("deliveredCount").textContent = parcels.filter(p =>
+        p.status === "delivered"
+      ).length;
+    }
+
+    function renderParcels() {
+      updateStats();
+
+      const query = $("searchInput").value.trim().toLowerCase();
+
+      const filtered = parcels.filter(p =>
+        [p.item_name, p.tracking_number, p.courier, p.shopping_platform, p.status]
+          .some(value => String(value || "").toLowerCase().includes(query))
+      );
+
+      if (!filtered.length) {
+        $("parcelList").innerHTML =
+          '<div class="empty">' +
+          (query ? "No parcels match your search." : "No parcels yet. Add your first parcel to get started!") +
+          '</div>';
+        return;
+      }
+
+      $("parcelList").innerHTML = filtered.map(p => `
+        <article class="parcel">
+          <div class="parcel-heading">
+            <div style="min-width:0">
+              <div class="parcel-name">${escapeHtml(p.item_name || "My parcel")}</div>
+              <div class="tracking">Tracking: ${escapeHtml(p.tracking_number)}</div>
+            </div>
+            <span class="badge">${escapeHtml(prettyStatus(p.status))}</span>
+          </div>
+
+          <div class="tracking">
+            ${escapeHtml(p.courier)}
+            ${p.shopping_platform ? " · " + escapeHtml(p.shopping_platform) : ""}
+          </div>
+
+          <div class="parcel-footer">
+            <span class="muted small">Added ${escapeHtml(
+              p.created_at ? new Date(p.created_at).toLocaleDateString() : "recently"
+            )}</span>
+            <button class="btn btn-danger" type="button"
+              data-delete-id="${escapeHtml(p.id)}"
+              aria-label="Delete parcel">Delete</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    async function loadParcels() {
+      if (!currentUser || !supabaseClient) return;
+
+      $("parcelList").innerHTML = '<div class="empty">Loading parcels…</div>';
+
+      const { data, error } = await supabaseClient
+        .from("parcels")
+        .select("id, user_id, item_name, tracking_number, courier, shopping_platform, status, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        $("parcelList").innerHTML = "";
+        showNotice("globalNotice",
+          "Couldn't load parcels: " + error.message +
+          ". Check that your database columns and access policies are configured correctly.",
+          "error");
+        return;
+      }
+
+      parcels = data || [];
+      hideNotice("globalNotice");
+      renderParcels();
+    }
+
+    async function handleAuth(event) {
+      event.preventDefault();
+      if (busy || !supabaseClient) return;
+
+      const email = $("email").value.trim();
+      const password = $("password").value;
+
+      hideNotice("authNotice");
+      setBusy(true);
+
+      try {
+        if (isRegistering) {
+          const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password
+          });
+
+          if (error) throw error;
+
+          if (data.session) {
+            showNotice("globalNotice", "Account created successfully!", "success");
+          } else {
+            showNotice("authNotice",
+              "Registration received. Check your email for a confirmation link, then sign in.",
+              "success");
+          }
+        } else {
+          const { error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password
+          });
+
+          if (error) throw error;
+        }
+      } catch (error) {
+        showNotice("authNotice", error.message || "Authentication failed.", "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function addParcel(event) {
+      event.preventDefault();
+      if (busy || !currentUser || !supabaseClient) return;
+
+      const trackingNumber = $("trackingNumber").value.trim();
+      const courier = $("courier").value;
+
+      if (!trackingNumber || !courier) {
+        showNotice("parcelNotice", "Enter a tracking number and choose a courier.", "error");
+        return;
+      }
+
+      hideNotice("parcelNotice");
+      setBusy(true);
+
+      const newParcel = {
+        user_id: currentUser.id,
+        item_name: $("itemName").value.trim() || null,
+        tracking_number: trackingNumber,
+        courier,
+        shopping_platform: $("platform").value || null,
+        status: "pending"
+      };
+
+      try {
+        const { error } = await supabaseClient
+          .from("parcels")
+          .insert(newParcel);
+
+        if (error) throw error;
+
+        $("parcelForm").reset();
+        showNotice("parcelNotice",
+          "Parcel saved successfully! Live courier updates aren't connected yet.",
+          "success");
+
+        await loadParcels();
+      } catch (error) {
+        showNotice("parcelNotice",
+          "Couldn't save parcel: " + (error.message || "Unknown error"),
+          "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function deleteParcel(id) {
+      if (!currentUser || !supabaseClient) return;
+
+      const parcel = parcels.find(p => String(p.id) === String(id));
+      if (!parcel) return;
+
+      if (!confirm("Delete this parcel from your list?")) return;
+
+      const { error } = await supabaseClient
+        .from("parcels")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", currentUser.id);
+
+      if (error) {
+        showNotice("globalNotice", "Couldn't delete parcel: " + error.message, "error");
+        return;
+      }
+
+      parcels = parcels.filter(p => String(p.id) !== String(id));
+      renderParcels();
+      showNotice("globalNotice", "Parcel deleted.", "success");
+    }
+  
